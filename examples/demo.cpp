@@ -19,21 +19,55 @@
 #include <openarm/can/socket/openarm.hpp>
 #include <openarm/damiao_motor/dm_motor_constants.hpp>
 #include <thread>
+#include <algorithm>
 
-int main() {
+int main(int argc, char *argv[]) {
+
+    if(argc != 2 && argc != 3) {
+        std::cerr << "Usage: " << argv[0] << " " << " <can interface> <optional fd mode: true/false. default: false>" << std::endl;
+        return 1;
+    }
+
+    std::string can_interface { argv[1] };
+
+    bool can_fd { false };
+    if(argc == 3) {
+        std::string can_fd_string { argv[2] };
+
+        std::transform(can_fd_string.begin(), can_fd_string.end(), can_fd_string.begin(),
+        [](unsigned char c){ return std::tolower(c); });
+
+        can_fd = (can_fd_string == "true");
+    }
+
     try {
         std::cout << "=== OpenArm CAN Example ===" << std::endl;
         std::cout << "This example demonstrates the OpenArm API functionality" << std::endl;
 
         // Initialize OpenArm with CAN interface and enable CAN-FD
         std::cout << "Initializing OpenArm CAN..." << std::endl;
-        openarm::can::socket::OpenArm openarm("can0", true);  // Use CAN-FD on can0 interface
+        std::cout << "Interface: " << can_interface << std::endl;
+        std::cout << "Flexible Data Mode: " << ((can_fd) ? "true" : "false") << std::endl;
+        openarm::can::socket::OpenArm openarm(can_interface, can_fd);  // Use CAN-FD on can0 interface
 
         // Initialize arm motors
+        // std::vector<openarm::damiao_motor::MotorType> motor_types = {
+        //     openarm::damiao_motor::MotorType::DM4310, openarm::damiao_motor::MotorType::DM4310};
+        // std::vector<uint32_t> send_can_ids = {0x01, 0x02};
+        // std::vector<uint32_t> recv_can_ids = {0x11, 0x12};
+
         std::vector<openarm::damiao_motor::MotorType> motor_types = {
-            openarm::damiao_motor::MotorType::DM4310, openarm::damiao_motor::MotorType::DM4310};
-        std::vector<uint32_t> send_can_ids = {0x01, 0x02};
-        std::vector<uint32_t> recv_can_ids = {0x11, 0x12};
+            openarm::damiao_motor::MotorType::DM8009,
+            openarm::damiao_motor::MotorType::DM8009,
+            openarm::damiao_motor::MotorType::DM4340,
+            openarm::damiao_motor::MotorType::DM4340,
+            openarm::damiao_motor::MotorType::DM4310,
+            openarm::damiao_motor::MotorType::DM4310,
+            openarm::damiao_motor::MotorType::DM4310
+        };
+        std::vector<uint32_t> send_can_ids = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+        std::vector<uint32_t> recv_can_ids = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17};
+
         openarm.init_arm_motors(motor_types, send_can_ids, recv_can_ids);
 
         // Initialize gripper
@@ -74,14 +108,26 @@ int main() {
         openarm.set_callback_mode_all(openarm::damiao_motor::CallbackMode::STATE);
 
         // Control arm motors with position control
-        openarm.get_arm().mit_control_all({openarm::damiao_motor::MITParam{2, 1, 0, 0, 0},
-                                           openarm::damiao_motor::MITParam{2, 1, 0, 0, 0}});
+        openarm.get_arm().mit_control_all({
+            openarm::damiao_motor::MITParam{10.0, 1.0, 0.0, 0.0, 0.0},
+            openarm::damiao_motor::MITParam{10.0, 1.0, 0.0, 0.0, 0.0},
+            openarm::damiao_motor::MITParam{10.0, 1.0, 0.0, 0.0, 0.0},
+            openarm::damiao_motor::MITParam{10.0, 1.0, 0.0, 0.0, 0.0},
+            openarm::damiao_motor::MITParam{10.0, 1.0, 0.0, 0.0, 0.0},
+            openarm::damiao_motor::MITParam{10.0, 1.0, 0.0, 0.0, 0.0},
+            openarm::damiao_motor::MITParam{10.0, 1.0, 0.0, 0.0, 0.0},
+        });
         openarm.recv_all(500);
+        // for (int i = 0; i < 50; i++) {
+        //     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        //     openarm.refresh_all();
+        //     openarm.recv_all(300);
+        // }
 
         // Control arm motors with torque control
-        openarm.get_arm().mit_control_all({openarm::damiao_motor::MITParam{0, 0, 0, 0, 0.1},
-                                           openarm::damiao_motor::MITParam{0, 0, 0, 0, 0.1}});
-        openarm.recv_all(500);
+        // openarm.get_arm().mit_control_all({openarm::damiao_motor::MITParam{0.0, 0.0, 0.0, 0.0, 0.1},
+        //                                    openarm::damiao_motor::MITParam{0.0, 0.0, 0.0, 0.0, 0.1}});
+        // openarm.recv_all(500);
 
         // Control gripper
         std::cout << "Closing gripper..." << std::endl;

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <cmath>
+#include <cstdint>
 #include <cstring>
 #include <openarm/damiao_motor/dm_motor.hpp>
 #include <openarm/damiao_motor/dm_motor_constants.hpp>
@@ -41,6 +42,10 @@ CANPacket CanPacketEncoder::create_mit_control_command(const Motor& motor,
 
 CANPacket CanPacketEncoder::create_query_param_command(const Motor& motor, int RID) {
     return {0x7FF, pack_query_param_data(motor.get_send_can_id(), RID)};
+}
+
+CANPacket CanPacketEncoder::create_set_param_command(const Motor& motor, int RID, double value) {
+    return {0x7FF, pack_set_param_data(motor.get_send_can_id(), RID, value)};
 }
 
 CANPacket CanPacketEncoder::create_refresh_command(const Motor& motor) {
@@ -134,6 +139,29 @@ std::vector<uint8_t> CanPacketEncoder::pack_query_param_data(uint32_t send_can_i
             0x00};
 }
 
+std::vector<uint8_t> CanPacketEncoder::pack_set_param_data(uint32_t send_can_id, int RID, double value) {
+    std::vector<uint8_t> packet {
+            static_cast<uint8_t>(send_can_id & 0xFF),
+            static_cast<uint8_t>((send_can_id >> 8) & 0xFF),
+            0x55, // Set command
+            static_cast<uint8_t>(RID),
+            0x00,
+            0x00,
+            0x00,
+            0x00};
+
+    if(rid_is_integral(RID)) {
+        // Integral handle
+        int32_t data = static_cast<int32_t>(std::round(value));
+        std::memcpy(packet.data() + 4, &data, sizeof(data));
+    } else {
+        float raw_data = static_cast<float>(value);
+        std::memcpy(packet.data() + 4, &raw_data, sizeof(raw_data));
+    }
+
+    return packet;
+}
+
 std::vector<uint8_t> CanPacketEncoder::pack_command_data(uint8_t cmd) {
     return {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, cmd};
 }
@@ -171,7 +199,6 @@ uint32_t CanPacketDecoder::uint8s_to_uint32(uint8_t byte1, uint8_t byte2, uint8_
 }
 
 bool CanPacketDecoder::is_in_ranges(int number) {
-    return (7 <= number && number <= 10) || (13 <= number && number <= 16) ||
-           (35 <= number && number <= 36);
+    return rid_is_integral(number);
 }
 }  // namespace openarm::damiao_motor

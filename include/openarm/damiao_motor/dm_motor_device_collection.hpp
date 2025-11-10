@@ -46,6 +46,10 @@ public:
     void query_param_one(int i, int RID);
     void query_param_all(int RID);
 
+    // Write parameter operations
+    void write_param_one(int i, int RID, double value);
+    void write_param_all(int RID, double value);
+
     // MIT control operations
     void mit_control_one(int i, const MITParam& mit_param);
     void mit_control_all(const std::vector<MITParam>& mit_params);

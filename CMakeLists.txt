@@ -129,6 +129,17 @@ add_executable(openarm-demo examples/demo.cpp)
 target_link_libraries(openarm-demo openarm_can)
 install(TARGETS openarm-demo DESTINATION ${OPENARM_CAN_LIBEXEC_DIR})
 
+# Query Motor Control Mode
+add_executable(openarm-query-motor-control-mode apps/query_control_mode.cpp)
+target_link_libraries(openarm-query-motor-control-mode openarm_can)
+install(TARGETS openarm-query-motor-control-mode DESTINATION ${OPENARM_CAN_LIBEXEC_DIR})
+
+# Set Motor Control Mode
+add_executable(openarm-set-motor-control-mode apps/set_control_mode.cpp)
+target_link_libraries(openarm-set-motor-control-mode openarm_can)
+install(TARGETS openarm-set-motor-control-mode DESTINATION ${OPENARM_CAN_LIBEXEC_DIR})
+
+
 # Install scripts
 install(PROGRAMS setup/change_baudrate.py setup/configure_socketcan.sh
                  setup/configure_socketcan_4_arms.sh setup/set_zero.sh

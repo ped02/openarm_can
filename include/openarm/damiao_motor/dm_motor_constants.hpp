@@ -17,6 +17,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <string>
 
 namespace openarm::damiao_motor {
 enum class MotorType : uint8_t {
@@ -82,8 +83,27 @@ enum class RID : uint8_t {
     dir = 55,
     p_m = 80,
     xout = 81,
-    COUNT = 82
+    COUNT = 82,
 };
+
+enum class MotorControlMode : uint8_t {
+    minMode = 0, // start of enum
+    MIT = 1,
+    POS_VEL = 2,
+    VEL = 3,
+    Torque_Pos = 4,
+    maxMode // end of enum
+};
+
+inline std::string GetMotorControlModeString(MotorControlMode mode) {
+    switch (mode) {
+        case MotorControlMode::MIT: return "MIT";
+        case MotorControlMode::POS_VEL: return "POS_VEL";
+        case MotorControlMode::VEL: return "VEL";
+        case MotorControlMode::Torque_Pos: return "Torque_Pos";
+        default: return "Invalid mode";
+    }
+}
 
 // Limit parameters structure for different motor types
 struct LimitParam {
