@@ -89,6 +89,18 @@ void DMDeviceCollection::query_param_all(int RID) {
     }
 }
 
+void DMDeviceCollection::write_param_one(int i, int RID, double value) {
+    CANPacket param_set = CanPacketEncoder::create_set_param_command(get_dm_devices()[i]->get_motor(), RID, value);
+    send_command_to_device(get_dm_devices()[i], param_set);
+}
+
+void DMDeviceCollection::write_param_all(int RID, double value) {
+    for (auto dm_device : get_dm_devices()) {
+        CANPacket param_set = CanPacketEncoder::create_set_param_command(dm_device->get_motor(), RID, value);
+    send_command_to_device(dm_device, param_set);
+    }
+}
+
 void DMDeviceCollection::send_command_to_device(std::shared_ptr<DMCANDevice> dm_device,
                                                 const CANPacket& packet) {
     if (can_socket_.is_canfd_enabled()) {
@@ -103,6 +115,11 @@ void DMDeviceCollection::send_command_to_device(std::shared_ptr<DMCANDevice> dm_
 void DMDeviceCollection::mit_control_one(int i, const MITParam& mit_param) {
     CANPacket mit_cmd =
         CanPacketEncoder::create_mit_control_command(get_dm_devices()[i]->get_motor(), mit_param);
+    // std::cout << "Motor [" << std::to_string(i) << "] Cmd - id: " << std::to_string(mit_cmd.send_can_id) << " data: ";
+    // for (const auto d : mit_cmd.data) {
+    //     std::cout << std::to_string(d) << ", ";
+    // }
+    // std::cout << '\n';
     send_command_to_device(get_dm_devices()[i], mit_cmd);
 }
 
